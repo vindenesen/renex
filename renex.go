@@ -14,6 +14,11 @@ const (
 )
 
 var (
+	sha1ver   string
+	buildTime string
+)
+
+var (
 	runMode   int
 	directory string
 
