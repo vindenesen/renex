@@ -158,7 +158,7 @@ func main() {
 	} else if runMode == ModeRevert {
 		err := renamer.Revert(directory, restoreFile, performRename)
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Printf("Error while reverting file names: %s", err.Error())
 		}
 	}
 }

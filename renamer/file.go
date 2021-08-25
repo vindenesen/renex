@@ -27,9 +27,15 @@ func (f *File) OriginalName() string {
 	return f.originalName
 }
 
-func (f *File) SetNewName(newName string) string {
+func (f *File) SetNewName(newName string) error {
+	if newName == f.currentName {
+		return errors.New("new name and current name is identical")
+	}
+	if IsFile(filepath.Join(f.directory.path, newName)) {
+		return errors.New("a file with this name already exists in the directory")
+	}
 	f.newName = newName
-	return f.NewName()
+	return nil
 }
 
 func (f *File) SetCurrentName(currentName string) string {
