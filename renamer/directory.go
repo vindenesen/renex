@@ -9,13 +9,17 @@ import (
 )
 
 type Directory struct {
-	path  string
-	files *[]*File
+	path    string
+	files   *[]*File
+	fileMap map[string]*File
 }
 
 func NewDirectory(directory string) (*Directory, error) {
 	if IsDirectory(directory) {
 		newDir := &Directory{path: directory}
+		files := make([]*File, 0)
+		newDir.files = &files
+		newDir.fileMap = make(map[string]*File)
 		err := newDir.findMyFiles()
 		if err != nil {
 			return nil, err
@@ -29,6 +33,12 @@ func (d *Directory) Path() string {
 	return d.path
 }
 
+func (d *Directory) addFile(f *File) {
+	files := append(*d.files, f)
+	d.files = &files
+	d.fileMap[f.currentName] = f
+}
+
 func (d *Directory) Files() *[]*File {
 	return d.files
 }
@@ -39,12 +49,14 @@ func (d *Directory) findMyFiles() error {
 		return errors.New(fmt.Sprintf("failed during reading of directory %s: %s", d.path, err.Error()))
 	}
 
-	files := make([]*File, 0)
 	for _, f := range content {
-		files = append(files, NewFile(d, f.Name()))
+		d.addFile(NewFile(d, f.Name()))
 	}
-	d.files = &files
 	return nil
+}
+
+func (d *Directory) GetFile(filename string) *File {
+	return d.fileMap[filename]
 }
 
 func IsDirectory(dir string) bool {

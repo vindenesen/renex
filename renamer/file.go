@@ -1,6 +1,8 @@
 package renamer
 
 import (
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -45,6 +47,32 @@ func (f *File) Directory() *Directory {
 
 func (f *File) FullPath() string {
 	return filepath.Join(f.Directory().Path(), f.CurrentName())
+}
+
+func (f *File) FullPathOriginal() string {
+	return filepath.Join(f.Directory().Path(), f.OriginalName())
+}
+
+func (f *File) FullPathNew() string {
+	return filepath.Join(f.Directory().Path(), f.NewName())
+}
+
+func (f *File) Rename() error {
+	if f.newName != "" {
+		if IsFile(f.FullPathNew()) {
+			return errors.New("cannot rename file, a file with the new file name already exists")
+		}
+		if f.newName != f.currentName {
+			err := os.Rename(f.FullPathOriginal(), f.FullPathNew())
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		return errors.New(fmt.Sprintf("new name hasn't been set, cannot rename"))
+	}
+
+	return nil
 }
 
 func IsFile(filename string) bool {

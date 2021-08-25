@@ -10,14 +10,14 @@ import (
 	"strings"
 )
 
-func RenameFiles(directory string, regex *regexp.Regexp, newNamePattern string, trimSuffix string, trimPrefix string, separator string, performRename bool, verbose bool) error {
+func RenameFiles(directory string, regex *regexp.Regexp, newNamePattern string, trimSuffix string, trimPrefix string, separator string, performRename bool, verbose bool, backupFile string) error {
 	d, _ := filepath.Abs(directory)
 	dir, err := NewDirectory(d)
 	if err != nil {
 		fmt.Println(err.Error())
 	} else {
 		if !performRename {
-			fmt.Println("WARNING - Not renaming files, just printing what would be done")
+			fmt.Println("WARNING - Not renaming files, just printing what would be done. Add -rename option to actually make changes")
 		}
 		files := *dir.Files()
 		for _, f := range files {
@@ -52,11 +52,14 @@ func RenameFiles(directory string, regex *regexp.Regexp, newNamePattern string, 
 				}
 
 				if performRename {
-					// TODO
 					// Write to backup file
-					err := writeToBackup(f, "backup_file.log")
+					err := writeToBackup(f, backupFile)
 					if err != nil {
 						return errors.New(fmt.Sprintf("unable to rename file because: %s", err.Error()))
+					}
+					err = f.Rename()
+					if err != nil {
+						fmt.Printf("Unable to rename file because: %s\n", err.Error())
 					}
 				}
 			}
@@ -88,11 +91,51 @@ func writeToBackup(f *File, bF string) error {
 	return nil
 }
 
-func Revert(directory *Directory, backupFile string) error {
-	if IsFile(backupFile) {
-
+func Revert(directory string, backupFile string, performRename bool) error {
+	d, _ := filepath.Abs(directory)
+	dir, err := NewDirectory(d)
+	if err != nil {
+		fmt.Println(err.Error())
 	} else {
-		return errors.New("specified backup file does not exist")
+		if IsFile(backupFile) {
+			if !performRename {
+				fmt.Println("WARNING - Not renaming files, just printing what would be done. Add -rename option to actually make changes")
+			}
+			file, err := os.OpenFile(backupFile, os.O_RDONLY, 660)
+			if err != nil {
+				return errors.New(fmt.Sprintf("unable to open backup file: %s", err.Error()))
+			}
+			defer func() {
+				err := file.Close()
+				if err != nil {
+					fmt.Println("Unable to close backup file: " + err.Error())
+				}
+			}()
+
+			csvFile := csv.NewReader(file)
+			csvFile.Comma = ';'
+			files, err := csvFile.ReadAll()
+			if err != nil {
+				return errors.New(fmt.Sprintf("unable to read from backup file: %s", err.Error()))
+			}
+			for _, f := range files {
+				fmt.Printf("Reverting file name \"%s\" to \"%s\"\n", f[1], f[0])
+				dirFile := dir.GetFile(f[1])
+				if dirFile != nil {
+					dirFile.SetNewName(f[0])
+					if performRename {
+						err := dirFile.Rename()
+						if err != nil {
+							fmt.Printf("Unable to revert file %s to original name %s: %s\n", f[1], f[0], err.Error())
+						}
+					}
+				} else {
+					fmt.Printf("WARNING - Unable to revert file %s to original name %s, couldn't locate the file in the directory\n", f[1], f[0])
+				}
+			}
+		} else {
+			return errors.New("specified backup file does not exist")
+		}
 	}
 	return nil
 }
