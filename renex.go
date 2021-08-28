@@ -14,8 +14,9 @@ const (
 )
 
 var (
-	sha1ver   string
+	sha1Ver   string
 	buildTime string
+	release   string
 )
 
 var (
@@ -127,8 +128,17 @@ func init() {
 	}
 }
 
+func versionInfo() string {
+	if buildTime == "" {
+		return fmt.Sprintf("Build date: N/A, Git: develop, Release: develop")
+	}
+
+	return fmt.Sprintf("Build date: %s, Git: %s, Release: %s", buildTime, sha1Ver, release)
+}
+
 func printHelpUsage() {
-	fmt.Printf("Usage: \n" +
+	fmt.Printf(versionInfo() + "\n" +
+		"Usage: \n" +
 		"  renex help - displays usage information\n" +
 		"\n" +
 		"  renex rename <options> - rename files matching regex\n" +
@@ -148,10 +158,7 @@ func printHelpUsage() {
 		"    -directory directory - [REQUIRED]\n" +
 		"    -restore file - [REQUIRED]\n" +
 		"    -rename - To actually revert file names, add this" +
-		"\n" +
-		"Examples: \n" +
-		"" +
-		"\n")
+		"\n\n")
 }
 
 func main() {

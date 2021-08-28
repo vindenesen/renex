@@ -48,13 +48,11 @@ func RenameFiles(directory string, regex *regexp.Regexp, newNamePattern string, 
 				}
 				err := f.SetNewName(newName)
 				if err != nil {
-					if verbose {
-						fmt.Printf("* Rename \"%s\" > %s: %s\n", f.CurrentName(), newName, err.Error())
-						continue
-					}
+					fmt.Printf("* Rename \"%s\" > %s: %s\n", f.CurrentName(), newName, err.Error())
+					continue
 				}
 
-				fmt.Printf("* Rename \"%s\" > \"%s\"", f.FullPath(), f.NewName())
+				fmt.Printf("* Rename \"%s\" > \"%s\"", f.CurrentName(), f.NewName())
 				if verbose {
 					fmt.Printf(" - Verbose info: \"%s\" %s\n", newNameVerbose, groups)
 				} else {
